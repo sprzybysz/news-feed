@@ -1,15 +1,36 @@
 const http = require('http');
 fs = require('fs');
 path = require('path');
+handlebars = require('handlebars');
 
 require('dotenv').config();
 
-const servePage = (res, pageName) => {
-    res.writeHead(200);
-    let stream = fs.createReadStream('views/' + pageName);
-    stream.pipe(res);
-}
+const articles = [
+    {
+        url: 'https://example.com',
+        title1: 'Example 1',
+    },
+    {
+        url: 'https://example.com',
+        title1: 'Example 2',
+    }
+]
+    
 
+const servePage = (res, pageName, data) => {
+    fs.readFile('views/' + pageName, 'utf-8', (err, html) => {
+        if(err) {
+            console.log(err);
+            res.writeHead(500);
+            res.end();
+        } else {
+            res.writeHead(200);
+            const templateFunction = handlebars.compile(html);
+            res.end(templateFunction(data || {}));
+        }
+    })
+}
+// public files
 const serverPublicFile = (res, url) => {
     res.writeHead(200);
     let stream = fs.createReadStream(path.join(__dirname, url));
@@ -31,7 +52,10 @@ const server = http.createServer((req, res) => {
             servePage(res, 'settings.html')
             break;
         default:
-            servePage(res, 'home.html')
+            servePage(res, 'home.html', {
+                heading: 'News - Hello World',
+                articles
+            })
             break;
 
     }
